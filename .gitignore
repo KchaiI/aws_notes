@@ -6,6 +6,9 @@
 crash.log
 crash.*.log
 
+backend.hcl
+*.backend.hcl
+
 *.tfvars
 *.tfvars.json
 !example.tfvars
