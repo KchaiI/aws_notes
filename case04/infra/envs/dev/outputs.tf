@@ -55,3 +55,8 @@ output "cloudfront_domain_name" {
 output "cloudfront_distribution_id" {
   value = module.cloudfront.distribution_id
 }
+
+output "github_actions_role_arn" {
+  description = "GitHub Secretsに登録するロールARN"
+  value       = module.github_oidc.role_arn
+}

@@ -18,3 +18,19 @@ output "security_group_id" {
 output "log_group_name" {
   value = aws_cloudwatch_log_group.this.name
 }
+
+output "task_execution_role_arn" {
+  value = aws_iam_role.task_execution.arn
+}
+
+output "task_role_arn" {
+  value = aws_iam_role.task.arn
+}
+
+output "cluster_arn" {
+  value = aws_ecs_cluster.this.arn
+}
+
+output "service_arn" {
+  value = aws_ecs_service.this.id
+}

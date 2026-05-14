@@ -72,3 +72,21 @@ module "cloudfront" {
   environment  = var.environment
   alb_dns_name = module.alb.alb_dns_name
 }
+
+module "github_oidc" {
+  source = "../../modules/github_oidc"
+
+  project     = var.project
+  environment = var.environment
+
+  github_owner = "KchaiI"
+  github_repo  = "aws_notes"
+
+  allowed_branches = ["main"]
+
+  ecr_repository_arn       = module.ecr.repository_arn
+  ecs_cluster_arn          = module.ecs.cluster_arn
+  ecs_service_arn          = module.ecs.service_arn
+  task_execution_role_arn  = module.ecs.task_execution_role_arn
+  task_role_arn            = module.ecs.task_role_arn
+}
