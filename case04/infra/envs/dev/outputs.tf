@@ -46,3 +46,12 @@ output "ecs_service_name" {
 output "ecs_log_group_name" {
   value = module.ecs.log_group_name
 }
+
+output "cloudfront_domain_name" {
+  description = "CloudFront ドメイン(エンドユーザーがアクセスするURL)"
+  value       = module.cloudfront.domain_name
+}
+
+output "cloudfront_distribution_id" {
+  value = module.cloudfront.distribution_id
+}

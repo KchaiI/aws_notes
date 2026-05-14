@@ -64,3 +64,11 @@ module "rds" {
 
   db_engine_version = "16.10"
 }
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project      = var.project
+  environment  = var.environment
+  alb_dns_name = module.alb.alb_dns_name
+}
