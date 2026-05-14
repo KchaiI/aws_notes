@@ -1,3 +1,4 @@
+import "./lib/env.js";
 import Fastify from "fastify";
 import sensible from "@fastify/sensible";
 import { tasksRoutes } from "./routes/tasks.js";

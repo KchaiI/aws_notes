@@ -19,16 +19,30 @@ output "ecr_repository_url" {
 }
 
 output "bastion_instance_id" {
-  description = "踏み台EC2インスタンスID"
-  value       = module.bastion.instance_id
+  value = module.bastion.instance_id
 }
 
 output "rds_endpoint" {
-  description = "RDSのエンドポイント"
-  value       = module.rds.address
+  value = module.rds.address
 }
 
 output "rds_secret_arn" {
-  description = "DB認証情報のSecrets Manager ARN"
-  value       = module.rds.secret_arn
+  value = module.rds.secret_arn
+}
+
+output "alb_dns_name" {
+  description = "ALBのDNS名(APIエンドポイント)"
+  value       = module.alb.alb_dns_name
+}
+
+output "ecs_cluster_name" {
+  value = module.ecs.cluster_name
+}
+
+output "ecs_service_name" {
+  value = module.ecs.service_name
+}
+
+output "ecs_log_group_name" {
+  value = module.ecs.log_group_name
 }
