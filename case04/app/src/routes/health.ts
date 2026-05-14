@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma.js";
 export async function healthRoutes(fastify: FastifyInstance) {
   // 軽量ヘルスチェック(プロセスが生きていればOK)
   fastify.get("/health", async () => {
-    return { status: "ok", version: "v2-from-cd" };
+    return { status: "ok" };
   });
 
   // DB含めた詳細ヘルスチェック
