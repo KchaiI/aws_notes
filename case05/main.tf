@@ -206,6 +206,6 @@ resource "aws_cloudwatch_event_target" "sfn_target" {
   role_arn = aws_iam_role.eventbridge_role.arn
 
   input = jsonencode({
-    message = "test"
+    message = "<https://github.com/KchaiI/aws_notes|課題1,2>終わりました！"
   })
 }
