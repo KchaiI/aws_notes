@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../lib/prisma.js";
 
+
 export async function healthRoutes(fastify: FastifyInstance) {
   // 軽量ヘルスチェック(プロセスが生きていればOK)
   fastify.get("/health", async () => {
