@@ -223,8 +223,8 @@ resource "aws_ecs_service" "this" {
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
 
-  # ALBのヘルスチェックが落ち着くまでサービスが「unhealthy」と判定しないようにする
-  health_check_grace_period_seconds = 60
+  # Fastify は 1s 以内に起動するため短めに設定（ALB health check: interval=10s, threshold=2 → 20s で healthy）
+  health_check_grace_period_seconds = 15
 
   # タスク定義はCDで更新するので、Terraformが上書きしないようにignore
   lifecycle {
