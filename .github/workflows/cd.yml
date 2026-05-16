@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'case04/app/**'
+      - 'task_api/app/**'
       - '.github/workflows/cd.yml'
   workflow_dispatch:  # 手動実行も可能にする
 
@@ -48,7 +48,7 @@ jobs:
         id: build-image
         uses: docker/build-push-action@v6
         with:
-          context: ./case04/app
+          context: ./task_api/app
           platforms: linux/amd64
           push: true
           tags: |
