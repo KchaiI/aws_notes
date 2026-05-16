@@ -27,3 +27,4 @@ dist/
 *.log
 
 *.txt
+.claude/
