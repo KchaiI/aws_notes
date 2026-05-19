@@ -107,3 +107,30 @@ variable "log_retention_days" {
   type    = number
   default = 7
 }
+
+variable "additional_ingress_sg_ids" {
+  type        = list(string)
+  description = "追加で許可する SG ID リスト（Internal ALB SG など）"
+  default     = []
+}
+
+variable "extra_environment" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  description = "追加の環境変数（INTERNAL_API_URL など）"
+  default     = []
+}
+
+variable "register_to_internal_alb" {
+  type        = bool
+  description = "trueの場合 Internal ALB のターゲットグループに登録する"
+  default     = false
+}
+
+variable "internal_alb_target_group_arn" {
+  type        = string
+  description = "Internal ALB のターゲットグループ ARN（register_to_internal_alb=true の場合に必須）"
+  default     = null
+}

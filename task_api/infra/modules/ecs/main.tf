@@ -11,12 +11,15 @@ resource "aws_security_group" "ecs_task" {
   description = "Security group for ECS tasks"
   vpc_id      = var.vpc_id
 
-  ingress {
-    from_port       = var.container_port
-    to_port         = var.container_port
-    protocol        = "tcp"
-    security_groups = [var.alb_security_group_id]
-    description     = "Allow ALB to reach container port"
+  dynamic "ingress" {
+    for_each = concat([var.alb_security_group_id], var.additional_ingress_sg_ids)
+    content {
+      from_port       = var.container_port
+      to_port         = var.container_port
+      protocol        = "tcp"
+      security_groups = [ingress.value]
+      description     = "Allow ALB to reach container port"
+    }
   }
 
   egress {
@@ -172,7 +175,8 @@ resource "aws_ecs_task_definition" "this" {
           { name = "DB_HOST", value = var.db_endpoint },
           { name = "DB_PORT", value = tostring(var.db_port) },
           { name = "DB_NAME", value = var.db_name },
-        ] : []
+        ] : [],
+        var.extra_environment
       )
 
       secrets = var.enable_db ? [
@@ -225,6 +229,15 @@ resource "aws_ecs_service" "this" {
     target_group_arn = var.alb_target_group_arn
     container_name   = "app"
     container_port   = var.container_port
+  }
+
+  dynamic "load_balancer" {
+    for_each = var.register_to_internal_alb ? ["internal"] : []
+    content {
+      target_group_arn = var.internal_alb_target_group_arn
+      container_name   = "app"
+      container_port   = var.container_port
+    }
   }
 
   deployment_minimum_healthy_percent = 100

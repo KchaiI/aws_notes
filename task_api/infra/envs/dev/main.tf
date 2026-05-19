@@ -43,11 +43,14 @@ module "ecs" {
 
   container_image = "${module.ecr.repository_url}:latest"
 
-  create_cluster = true
-  enable_db      = true
-  db_secret_arn  = module.rds.secret_arn
-  db_endpoint    = module.rds.address
-  db_name        = "taskapi"
+  create_cluster                = true
+  enable_db                     = true
+  db_secret_arn                 = module.rds.secret_arn
+  db_endpoint                   = module.rds.address
+  db_name                       = "taskapi"
+  additional_ingress_sg_ids     = [module.internal_alb.security_group_id]
+  register_to_internal_alb      = true
+  internal_alb_target_group_arn = module.internal_alb.target_group_arn
 }
 
 module "rds" {
@@ -75,6 +78,16 @@ module "cloudfront" {
   alb_dns_name = module.alb.alb_dns_name
 }
 
+module "internal_alb" {
+  source = "../../modules/internal_alb"
+
+  project                    = var.project
+  environment                = var.environment
+  vpc_id                     = module.network.vpc_id
+  app_subnet_ids             = module.network.app_subnet_ids
+  allowed_security_group_ids = [module.ecs_frontend.security_group_id]
+}
+
 module "ecr_frontend" {
   source = "../../modules/ecr"
 
@@ -92,6 +105,9 @@ module "ecs_frontend" {
   create_cluster        = false
   cluster_arn           = module.ecs.cluster_arn
   enable_db             = false
+  extra_environment = [
+    { name = "INTERNAL_API_URL", value = "http://${module.internal_alb.dns_name}" }
+  ]
   vpc_id                = module.network.vpc_id
   app_subnet_ids        = module.network.app_subnet_ids
   alb_security_group_id = module.alb.security_group_id
