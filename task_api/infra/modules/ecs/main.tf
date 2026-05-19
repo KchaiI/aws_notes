@@ -113,7 +113,7 @@ resource "aws_iam_role_policy" "task_execution_secrets" {
 }
 
 # ──────────────────────────────────────
-# タスクロール (タスク内のアプリが使う、今回は空でもOK)
+# タスクロール (タスク内のアプリが使う)
 # ──────────────────────────────────────
 resource "aws_iam_role" "task" {
   name = "${local.name_prefix}-task-role"
@@ -132,6 +132,33 @@ resource "aws_iam_role" "task" {
   tags = {
     Name = "${local.name_prefix}-task-role"
   }
+}
+
+# S3 + Secrets Manager 権限（画像アップロード・Signed URL 生成用）
+resource "aws_iam_role_policy" "task_s3" {
+  count = var.enable_s3_access ? 1 : 0
+  name  = "${local.name_prefix}-task-s3"
+  role  = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject"
+        ]
+        Resource = "${var.s3_bucket_arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = [var.cf_private_key_secret_arn]
+      }
+    ]
+  })
 }
 
 # ──────────────────────────────────────

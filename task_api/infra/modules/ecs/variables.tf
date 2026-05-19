@@ -134,3 +134,21 @@ variable "internal_alb_target_group_arn" {
   description = "Internal ALB のターゲットグループ ARN（register_to_internal_alb=true の場合に必須）"
   default     = null
 }
+
+variable "enable_s3_access" {
+  type        = bool
+  description = "trueの場合 S3 + Secrets Manager（CF秘密鍵）権限をタスクロールに付与する"
+  default     = false
+}
+
+variable "s3_bucket_arn" {
+  type        = string
+  description = "アクセスを許可する S3 バケット ARN（enable_s3_access=true の場合に必須）"
+  default     = null
+}
+
+variable "cf_private_key_secret_arn" {
+  type        = string
+  description = "CloudFront 秘密鍵の Secrets Manager ARN（enable_s3_access=true の場合に必須）"
+  default     = null
+}

@@ -51,6 +51,9 @@ module "ecs" {
   additional_ingress_sg_ids     = [module.internal_alb.security_group_id]
   register_to_internal_alb      = true
   internal_alb_target_group_arn = module.internal_alb.target_group_arn
+  enable_s3_access              = true
+  s3_bucket_arn                 = module.s3_images.bucket_arn
+  cf_private_key_secret_arn     = module.s3_images.private_key_secret_arn
 }
 
 module "rds" {
@@ -76,6 +79,13 @@ module "cloudfront" {
   project      = var.project
   environment  = var.environment
   alb_dns_name = module.alb.alb_dns_name
+}
+
+module "s3_images" {
+  source = "../../modules/s3_images"
+
+  project     = var.project
+  environment = var.environment
 }
 
 module "internal_alb" {
