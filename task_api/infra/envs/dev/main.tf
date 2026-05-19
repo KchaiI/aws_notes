@@ -34,18 +34,20 @@ module "alb" {
 module "ecs" {
   source = "../../modules/ecs"
 
-  project              = var.project
-  environment          = var.environment
-  vpc_id               = module.network.vpc_id
-  app_subnet_ids       = module.network.app_subnet_ids
+  project               = var.project
+  environment           = var.environment
+  vpc_id                = module.network.vpc_id
+  app_subnet_ids        = module.network.app_subnet_ids
   alb_security_group_id = module.alb.security_group_id
-  alb_target_group_arn = module.alb.target_group_arn
+  alb_target_group_arn  = module.alb.target_group_arn
 
   container_image = "${module.ecr.repository_url}:latest"
 
-  db_secret_arn = module.rds.secret_arn
-  db_endpoint   = module.rds.address
-  db_name       = "taskapi"
+  create_cluster = true
+  enable_db      = true
+  db_secret_arn  = module.rds.secret_arn
+  db_endpoint    = module.rds.address
+  db_name        = "taskapi"
 }
 
 module "rds" {
@@ -87,7 +89,9 @@ module "ecs_frontend" {
   project               = var.project
   environment           = var.environment
   name_suffix           = "frontend"
+  create_cluster        = false
   cluster_arn           = module.ecs.cluster_arn
+  enable_db             = false
   vpc_id                = module.network.vpc_id
   app_subnet_ids        = module.network.app_subnet_ids
   alb_security_group_id = module.alb.security_group_id

@@ -1,5 +1,5 @@
 output "cluster_name" {
-  value = var.cluster_arn != null ? "" : aws_ecs_cluster.this[0].name
+  value = var.create_cluster ? aws_ecs_cluster.this[0].name : ""
 }
 
 output "service_name" {

@@ -81,8 +81,20 @@ variable "db_name" {
 
 variable "cluster_arn" {
   type        = string
-  description = "既存クラスターARN。nullの場合は新規作成"
+  description = "既存クラスターARN。create_cluster=falseの場合に必須"
   default     = null
+}
+
+variable "create_cluster" {
+  type        = bool
+  description = "trueの場合クラスターを新規作成、falseの場合はcluster_arnを使用"
+  default     = true
+}
+
+variable "enable_db" {
+  type        = bool
+  description = "trueの場合にDB環境変数・Secrets Manager権限を付与する"
+  default     = false
 }
 
 variable "name_suffix" {

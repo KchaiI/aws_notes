@@ -1,6 +1,6 @@
 locals {
   name_prefix = var.name_suffix != "" ? "${var.project}-${var.environment}-${var.name_suffix}" : "${var.project}-${var.environment}"
-  cluster_arn = var.cluster_arn != null ? var.cluster_arn : aws_ecs_cluster.this[0].arn
+  cluster_arn = var.create_cluster ? aws_ecs_cluster.this[0].arn : var.cluster_arn
 }
 
 # ──────────────────────────────────────
@@ -48,7 +48,7 @@ resource "aws_cloudwatch_log_group" "this" {
 # ECS クラスター
 # ──────────────────────────────────────
 resource "aws_ecs_cluster" "this" {
-  count = var.cluster_arn == null ? 1 : 0
+  count = var.create_cluster ? 1 : 0
   name  = "${local.name_prefix}-cluster"
 
   setting {
@@ -91,7 +91,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_basic" {
 
 # Secrets Manager からの取得を許可（DB接続が必要なサービスのみ）
 resource "aws_iam_role_policy" "task_execution_secrets" {
-  count = var.db_secret_arn != null ? 1 : 0
+  count = var.enable_db ? 1 : 0
   name  = "${local.name_prefix}-task-execution-secrets"
   role  = aws_iam_role.task_execution.id
 
@@ -168,14 +168,14 @@ resource "aws_ecs_task_definition" "this" {
           { name = "PORT",     value = tostring(var.container_port) },
           { name = "HOST",     value = "0.0.0.0" },
         ],
-        var.db_endpoint != null ? [
+        var.enable_db ? [
           { name = "DB_HOST", value = var.db_endpoint },
           { name = "DB_PORT", value = tostring(var.db_port) },
           { name = "DB_NAME", value = var.db_name },
         ] : []
       )
 
-      secrets = var.db_secret_arn != null ? [
+      secrets = var.enable_db ? [
         {
           name      = "DB_USER"
           valueFrom = "${var.db_secret_arn}:username::"
