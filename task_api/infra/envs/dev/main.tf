@@ -73,6 +73,30 @@ module "cloudfront" {
   alb_dns_name = module.alb.alb_dns_name
 }
 
+module "ecr_frontend" {
+  source = "../../modules/ecr"
+
+  project         = var.project
+  environment     = var.environment
+  repository_name = "frontend"
+}
+
+module "ecs_frontend" {
+  source = "../../modules/ecs"
+
+  project               = var.project
+  environment           = var.environment
+  name_suffix           = "frontend"
+  cluster_arn           = module.ecs.cluster_arn
+  vpc_id                = module.network.vpc_id
+  app_subnet_ids        = module.network.app_subnet_ids
+  alb_security_group_id = module.alb.security_group_id
+  alb_target_group_arn  = module.alb.frontend_target_group_arn
+  container_image       = "${module.ecr_frontend.repository_url}:latest"
+  container_port        = 3000
+  desired_count         = 0
+}
+
 module "github_oidc" {
   source = "../../modules/github_oidc"
 

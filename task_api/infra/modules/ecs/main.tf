@@ -1,5 +1,6 @@
 locals {
-  name_prefix = "${var.project}-${var.environment}"
+  name_prefix = var.name_suffix != "" ? "${var.project}-${var.environment}-${var.name_suffix}" : "${var.project}-${var.environment}"
+  cluster_arn = var.cluster_arn != null ? var.cluster_arn : aws_ecs_cluster.this[0].arn
 }
 
 # ──────────────────────────────────────
@@ -47,7 +48,8 @@ resource "aws_cloudwatch_log_group" "this" {
 # ECS クラスター
 # ──────────────────────────────────────
 resource "aws_ecs_cluster" "this" {
-  name = "${local.name_prefix}-cluster"
+  count = var.cluster_arn == null ? 1 : 0
+  name  = "${local.name_prefix}-cluster"
 
   setting {
     name  = "containerInsights"
@@ -87,10 +89,11 @@ resource "aws_iam_role_policy_attachment" "task_execution_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Secrets Manager からの取得を許可
+# Secrets Manager からの取得を許可（DB接続が必要なサービスのみ）
 resource "aws_iam_role_policy" "task_execution_secrets" {
-  name = "${local.name_prefix}-task-execution-secrets"
-  role = aws_iam_role.task_execution.id
+  count = var.db_secret_arn != null ? 1 : 0
+  name  = "${local.name_prefix}-task-execution-secrets"
+  role  = aws_iam_role.task_execution.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -159,16 +162,20 @@ resource "aws_ecs_task_definition" "this" {
         }
       ]
 
-      environment = [
-        { name = "NODE_ENV", value = "production" },
-        { name = "PORT",     value = tostring(var.container_port) },
-        { name = "HOST",     value = "0.0.0.0" },
-        { name = "DB_HOST",  value = var.db_endpoint },
-        { name = "DB_PORT",  value = tostring(var.db_port) },
-        { name = "DB_NAME",  value = var.db_name }
-      ]
+      environment = concat(
+        [
+          { name = "NODE_ENV", value = "production" },
+          { name = "PORT",     value = tostring(var.container_port) },
+          { name = "HOST",     value = "0.0.0.0" },
+        ],
+        var.db_endpoint != null ? [
+          { name = "DB_HOST", value = var.db_endpoint },
+          { name = "DB_PORT", value = tostring(var.db_port) },
+          { name = "DB_NAME", value = var.db_name },
+        ] : []
+      )
 
-      secrets = [
+      secrets = var.db_secret_arn != null ? [
         {
           name      = "DB_USER"
           valueFrom = "${var.db_secret_arn}:username::"
@@ -177,7 +184,7 @@ resource "aws_ecs_task_definition" "this" {
           name      = "DB_PASSWORD"
           valueFrom = "${var.db_secret_arn}:password::"
         }
-      ]
+      ] : []
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -203,7 +210,7 @@ data "aws_region" "current" {}
 # ──────────────────────────────────────
 resource "aws_ecs_service" "this" {
   name            = "${local.name_prefix}-service"
-  cluster         = aws_ecs_cluster.this.id
+  cluster         = local.cluster_arn
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"

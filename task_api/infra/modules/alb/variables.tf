@@ -29,3 +29,15 @@ variable "health_check_path" {
   description = "ヘルスチェックのパス"
   default     = "/health"
 }
+
+variable "frontend_port" {
+  type        = number
+  description = "フロントエンドコンテナのポート番号"
+  default     = 3000
+}
+
+variable "frontend_health_check_path" {
+  type        = string
+  description = "フロントエンドのヘルスチェックパス"
+  default     = "/"
+}

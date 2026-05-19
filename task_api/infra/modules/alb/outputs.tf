@@ -20,3 +20,8 @@ output "security_group_id" {
   description = "ALBのSG ID(ECS SGから許可するため)"
   value       = aws_security_group.alb.id
 }
+
+output "frontend_target_group_arn" {
+  description = "フロントエンド用ターゲットグループARN"
+  value       = aws_lb_target_group.frontend.arn
+}

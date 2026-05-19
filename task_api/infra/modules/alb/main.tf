@@ -79,7 +79,36 @@ resource "aws_lb_target_group" "this" {
 }
 
 # ──────────────────────────────────────
-# リスナー (80 -> ターゲットグループ)
+# フロントエンド用ターゲットグループ
+# ──────────────────────────────────────
+resource "aws_lb_target_group" "frontend" {
+  name        = "${local.name_prefix}-frontend-tg"
+  port        = var.frontend_port
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    path                = var.frontend_health_check_path
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    interval            = 10
+    timeout             = 5
+    matcher             = "200"
+  }
+
+  deregistration_delay = 30
+
+  tags = {
+    Name = "${local.name_prefix}-frontend-tg"
+  }
+}
+
+# ──────────────────────────────────────
+# リスナー (80 -> デフォルトはフロントエンド)
 # ──────────────────────────────────────
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
@@ -88,10 +117,33 @@ resource "aws_lb_listener" "http" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.frontend.arn
   }
 
   tags = {
     Name = "${local.name_prefix}-listener-http"
+  }
+}
+
+# ──────────────────────────────────────
+# リスナールール (/api/* と /health* は API へ)
+# ──────────────────────────────────────
+resource "aws_lb_listener_rule" "api" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 10
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.this.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*", "/health", "/health/*"]
+    }
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-api-rule"
   }
 }

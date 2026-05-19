@@ -58,12 +58,14 @@ variable "desired_count" {
 
 variable "db_secret_arn" {
   type        = string
-  description = "DB認証情報のSecrets Manager ARN"
+  description = "DB認証情報のSecrets Manager ARN (API用のみ必要)"
+  default     = null
 }
 
 variable "db_endpoint" {
   type        = string
-  description = "RDSのエンドポイント(host のみ)"
+  description = "RDSのエンドポイント (API用のみ必要)"
+  default     = null
 }
 
 variable "db_port" {
@@ -73,6 +75,20 @@ variable "db_port" {
 
 variable "db_name" {
   type        = string
+  description = "DB名 (API用のみ必要)"
+  default     = null
+}
+
+variable "cluster_arn" {
+  type        = string
+  description = "既存クラスターARN。nullの場合は新規作成"
+  default     = null
+}
+
+variable "name_suffix" {
+  type        = string
+  description = "リソース名サフィックス（同一クラスター内で複数サービスを区別）"
+  default     = ""
 }
 
 variable "log_retention_days" {

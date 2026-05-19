@@ -1,5 +1,5 @@
 output "cluster_name" {
-  value = aws_ecs_cluster.this.name
+  value = var.cluster_arn != null ? "" : aws_ecs_cluster.this[0].name
 }
 
 output "service_name" {
@@ -28,7 +28,7 @@ output "task_role_arn" {
 }
 
 output "cluster_arn" {
-  value = aws_ecs_cluster.this.arn
+  value = local.cluster_arn
 }
 
 output "service_arn" {
