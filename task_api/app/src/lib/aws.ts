@@ -1,11 +1,13 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { getSignedUrl as getCFSignedUrl } from "@aws-sdk/cloudfront-signer";
 import { randomUUID } from "crypto";
 
 const region = process.env.AWS_REGION ?? "ap-northeast-1";
 const s3 = new S3Client({ region });
+const sqs = new SQSClient({ region });
 const secretsManager = new SecretsManagerClient({ region });
 
 let cachedPrivateKey: string | null = null;
@@ -45,7 +47,27 @@ export async function generateSignedImageUrl(s3Key: string): Promise<string> {
 
   const privateKey = await getCFPrivateKey();
   const url = `https://${domain}/${s3Key}`;
-  const dateLessThan = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1時間
+  const dateLessThan = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
   return getCFSignedUrl({ url, keyPairId, privateKey, dateLessThan });
+}
+
+export async function sendCsvExportMessage(exportId: number): Promise<void> {
+  const queueUrl = process.env.SQS_CSV_QUEUE_URL;
+  if (!queueUrl) throw new Error("SQS_CSV_QUEUE_URL is not set");
+
+  await sqs.send(
+    new SendMessageCommand({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify({ exportId }),
+    })
+  );
+}
+
+export async function generateCsvDownloadUrl(s3Key: string): Promise<string> {
+  const bucket = process.env.S3_CSV_BUCKET_NAME;
+  if (!bucket) throw new Error("S3_CSV_BUCKET_NAME is not set");
+
+  const command = new GetObjectCommand({ Bucket: bucket, Key: s3Key });
+  return getSignedUrl(s3, command, { expiresIn: 600 });
 }

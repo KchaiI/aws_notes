@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, ClipboardList } from 'lucide-react'
+import { Plus, ClipboardList, Download } from 'lucide-react'
 import type { Task, TaskFormData, TaskStatus } from './types'
 import { TaskCard } from './components/TaskCard'
 import { TaskModal } from './components/TaskModal'
@@ -24,6 +24,7 @@ export default function App() {
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [toasts, setToasts] = useState<ToastMessage[]>([])
+  const [csvExporting, setCsvExporting] = useState(false)
 
   const addToast = (type: 'success' | 'error', message: string) => {
     setToasts((prev) => [...prev, { id: Date.now(), type, message }])
@@ -102,6 +103,37 @@ export default function App() {
     }
   }
 
+  const handleCsvExport = async () => {
+    setCsvExporting(true)
+    addToast('success', 'CSVの生成を開始しました...')
+    try {
+      const res = await fetch(`${BASE}/csv-exports`, { method: 'POST' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const { id } = await res.json()
+
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const statusRes = await fetch(`${BASE}/csv-exports/${id}`)
+        if (!statusRes.ok) throw new Error(`HTTP ${statusRes.status}`)
+        const data = await statusRes.json()
+        if (data.status === 'complete' && data.downloadUrl) {
+          const a = document.createElement('a')
+          a.href = data.downloadUrl
+          a.download = 'tasks.csv'
+          a.click()
+          addToast('success', 'CSVのダウンロードを開始しました')
+          return
+        }
+        if (data.status === 'failed') throw new Error('CSV生成に失敗しました')
+      }
+      throw new Error('タイムアウト: CSV生成に時間がかかっています')
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'CSV出力に失敗しました')
+    } finally {
+      setCsvExporting(false)
+    }
+  }
+
   const openCreate = () => { setEditingTask(null); setShowModal(true) }
   const openEdit = (task: Task) => { setEditingTask(task); setShowModal(true) }
   const closeModal = () => { setShowModal(false); setEditingTask(null) }
@@ -124,14 +156,24 @@ export default function App() {
             <ClipboardList className="w-5 h-5 text-indigo-600" />
             <h1 className="text-lg font-bold text-gray-900">Task Manager</h1>
           </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">新規作成</span>
-            <span className="sm:hidden">追加</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCsvExport}
+              disabled={csvExporting}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">{csvExporting ? '生成中...' : 'CSVエクスポート'}</span>
+            </button>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">新規作成</span>
+              <span className="sm:hidden">追加</span>
+            </button>
+          </div>
         </div>
       </header>
 

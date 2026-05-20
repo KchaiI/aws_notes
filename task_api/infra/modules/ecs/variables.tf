@@ -152,3 +152,21 @@ variable "cf_private_key_secret_arn" {
   description = "CloudFront 秘密鍵の Secrets Manager ARN（enable_s3_access=true の場合に必須）"
   default     = null
 }
+
+variable "enable_sqs_send" {
+  type        = bool
+  description = "trueの場合 SQS SendMessage 権限をタスクロールに付与する"
+  default     = false
+}
+
+variable "sqs_csv_queue_arn" {
+  type        = string
+  description = "SendMessage を許可する SQS キュー ARN（enable_sqs_send=true の場合に必須）"
+  default     = null
+}
+
+variable "s3_csv_bucket_arn" {
+  type        = string
+  description = "Presigned URL 生成のために GetObject を許可する CSV 用 S3 バケット ARN"
+  default     = null
+}

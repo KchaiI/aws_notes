@@ -4,6 +4,7 @@ import sensible from "@fastify/sensible";
 import { tasksRoutes } from "./routes/tasks.js";
 import { healthRoutes } from "./routes/health.js";
 import { imagesRoutes } from "./routes/images.js";
+import { csvExportsRoutes } from "./routes/csv_exports.js";
 import { prisma } from "./lib/prisma.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -25,6 +26,7 @@ await fastify.register(sensible);
 // ルート
 await fastify.register(tasksRoutes, { prefix: "/api" });
 await fastify.register(imagesRoutes, { prefix: "/api" });
+await fastify.register(csvExportsRoutes, { prefix: "/api" });
 await fastify.register(healthRoutes);
 
 // グレースフルシャットダウン

@@ -59,7 +59,12 @@ module "ecs" {
     { name = "CF_DOMAIN",                  value = module.s3_images.cloudfront_domain },
     { name = "CF_KEY_PAIR_ID",             value = module.s3_images.cf_public_key_id },
     { name = "CF_PRIVATE_KEY_SECRET_ARN",  value = module.s3_images.private_key_secret_arn },
+    { name = "SQS_CSV_QUEUE_URL",          value = module.sqs_csv.queue_url },
+    { name = "S3_CSV_BUCKET_NAME",         value = module.s3_csv.bucket_name },
   ]
+  enable_sqs_send   = true
+  sqs_csv_queue_arn = module.sqs_csv.queue_arn
+  s3_csv_bucket_arn = module.s3_csv.bucket_arn
 }
 
 module "rds" {
@@ -70,10 +75,11 @@ module "rds" {
   vpc_id        = module.network.vpc_id
   db_subnet_ids = module.network.db_subnet_ids
 
-  # 踏み台SG + ECSタスクSG からのアクセスを許可
+  # 踏み台SG + ECSタスクSG + WorkerSG からのアクセスを許可
   allowed_security_group_ids = [
     module.bastion.security_group_id,
     module.ecs.security_group_id,
+    module.ecs_worker.security_group_id,
   ]
 
   db_engine_version = "16.10"
@@ -144,6 +150,46 @@ module "ecs_frontend" {
   container_image       = "${module.ecr_frontend.repository_url}:latest"
   container_port        = 3000
   desired_count         = 1
+}
+
+module "sqs_csv" {
+  source = "../../modules/sqs"
+  name   = "${var.project}-${var.environment}-csv-export"
+}
+
+module "s3_csv" {
+  source      = "../../modules/s3_csv"
+  bucket_name = "${var.project}-${var.environment}-csv-exports"
+}
+
+module "ecr_worker" {
+  source = "../../modules/ecr"
+
+  project         = var.project
+  environment     = var.environment
+  repository_name = "worker"
+}
+
+module "ecs_worker" {
+  source = "../../modules/ecs_worker"
+
+  project        = var.project
+  environment    = var.environment
+  vpc_id         = module.network.vpc_id
+  app_subnet_ids = module.network.app_subnet_ids
+  cluster_arn    = module.ecs.cluster_arn
+
+  container_image    = "${module.ecr_worker.repository_url}:latest"
+  sqs_csv_queue_arn  = module.sqs_csv.queue_arn
+  s3_csv_bucket_arn  = module.s3_csv.bucket_arn
+  db_secret_arn      = module.rds.secret_arn
+
+  extra_environment = [
+    { name = "SQS_CSV_QUEUE_URL",  value = module.sqs_csv.queue_url },
+    { name = "S3_CSV_BUCKET_NAME", value = module.s3_csv.bucket_name },
+    { name = "DB_HOST",            value = module.rds.address },
+    { name = "DB_NAME",            value = "taskapi" },
+  ]
 }
 
 module "github_oidc" {

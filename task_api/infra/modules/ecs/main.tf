@@ -161,6 +161,29 @@ resource "aws_iam_role_policy" "task_s3" {
   })
 }
 
+# SQS SendMessage 権限（CSV エクスポートジョブをキューに送信する API サーバー用）
+resource "aws_iam_role_policy" "task_sqs_send" {
+  count = var.enable_sqs_send ? 1 : 0
+  name  = "${local.name_prefix}-task-sqs-send"
+  role  = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = var.sqs_csv_queue_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${var.s3_csv_bucket_arn}/*"
+      }
+    ]
+  })
+}
+
 # ──────────────────────────────────────
 # タスク定義
 # ──────────────────────────────────────
