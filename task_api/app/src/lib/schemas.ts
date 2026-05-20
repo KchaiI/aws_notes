@@ -6,6 +6,7 @@ export const TaskInputSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().optional(),
   status: TaskStatusSchema.optional(),
+  pictureKey: z.string().max(500).optional(),
 });
 
 export const TaskIdParamSchema = z.object({

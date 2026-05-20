@@ -9,12 +9,13 @@ datasource db {
 }
 
 model Task {
-  id          Int       @id @default(autoincrement())
-  title       String    @db.VarChar(255)
-  description String?   @db.Text
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(255)
+  description String?    @db.Text
   status      TaskStatus @default(pending)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  pictureKey  String?    @db.VarChar(500) @map("picture_key")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   @@map("tasks")
 }

@@ -54,6 +54,12 @@ module "ecs" {
   enable_s3_access              = true
   s3_bucket_arn                 = module.s3_images.bucket_arn
   cf_private_key_secret_arn     = module.s3_images.private_key_secret_arn
+  extra_environment = [
+    { name = "S3_BUCKET_NAME",             value = module.s3_images.bucket_name },
+    { name = "CF_DOMAIN",                  value = module.s3_images.cloudfront_domain },
+    { name = "CF_KEY_PAIR_ID",             value = module.s3_images.cf_public_key_id },
+    { name = "CF_PRIVATE_KEY_SECRET_ARN",  value = module.s3_images.private_key_secret_arn },
+  ]
 }
 
 module "rds" {

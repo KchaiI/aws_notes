@@ -5,10 +5,11 @@ import {
   TaskIdParamSchema,
   TaskListQuerySchema,
 } from "../lib/schemas.js";
+import { generateSignedImageUrl } from "../lib/aws.js";
 
 export async function tasksRoutes(fastify: FastifyInstance) {
   // GET /tasks - 一覧
-  fastify.get("/tasks", async (request, reply) => {
+  fastify.get("/tasks", async (request) => {
     const query = TaskListQuerySchema.parse(request.query);
 
     const tasks = await prisma.task.findMany({
@@ -16,7 +17,14 @@ export async function tasksRoutes(fastify: FastifyInstance) {
       orderBy: { id: "asc" },
     });
 
-    return tasks;
+    return Promise.all(
+      tasks.map(async (task) => ({
+        ...task,
+        signedImageUrl: task.pictureKey
+          ? await generateSignedImageUrl(task.pictureKey)
+          : null,
+      }))
+    );
   });
 
   // POST /tasks - 作成
