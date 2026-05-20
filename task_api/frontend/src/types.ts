@@ -5,6 +5,8 @@ export type Task = {
   title: string
   description: string | null
   status: TaskStatus
+  pictureKey: string | null
+  signedImageUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -13,4 +15,5 @@ export type TaskFormData = {
   title: string
   description: string
   status: TaskStatus
+  pictureKey?: string
 }

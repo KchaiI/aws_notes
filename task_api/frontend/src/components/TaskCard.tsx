@@ -56,6 +56,17 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: Props) {
         </div>
       </div>
 
+      {/* Image */}
+      {task.signedImageUrl && (
+        <div className="rounded-lg overflow-hidden bg-gray-50 h-36">
+          <img
+            src={task.signedImageUrl}
+            alt="task"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Description */}
       {task.description && (
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">

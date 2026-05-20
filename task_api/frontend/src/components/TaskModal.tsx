@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, ImagePlus, Trash2 } from 'lucide-react'
 import type { Task, TaskFormData, TaskStatus } from '../types'
 
 type Props = {
@@ -20,18 +20,54 @@ export function TaskModal({ task, onSave, onClose }: Props) {
   const [status, setStatus] = useState<TaskStatus>(task?.status ?? 'pending')
   const [saving, setSaving] = useState(false)
 
+  const [pictureKey, setPictureKey] = useState<string | undefined>(task?.pictureKey ?? undefined)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(task?.signedImageUrl ?? null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const res = await fetch(`/api/upload-url?filename=${encodeURIComponent(file.name)}`)
+      if (!res.ok) throw new Error('URL取得失敗')
+      const { uploadUrl, s3Key } = await res.json()
+
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      })
+
+      setPictureKey(s3Key)
+      setPreviewUrl(URL.createObjectURL(file))
+    } catch {
+      alert('画像のアップロードに失敗しました')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setPictureKey(undefined)
+    setPreviewUrl(null)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
     setSaving(true)
     try {
-      await onSave({ title: title.trim(), description: description.trim(), status })
+      await onSave({ title: title.trim(), description: description.trim(), status, pictureKey })
       onClose()
     } catch {
       // error toast is shown by parent
@@ -102,6 +138,42 @@ export function TaskModal({ task, onSave, onClose }: Props) {
             </select>
           </div>
 
+          {/* Image upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              画像 <span className="text-gray-400 font-normal">（任意）</span>
+            </label>
+            {previewUrl ? (
+              <div className="relative rounded-lg overflow-hidden bg-gray-50 h-40">
+                <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow text-red-500 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-gray-200 text-sm text-gray-500 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 disabled:opacity-50 transition-colors"
+              >
+                <ImagePlus className="w-4 h-4" />
+                {uploading ? 'アップロード中...' : '画像を選択'}
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -112,7 +184,7 @@ export function TaskModal({ task, onSave, onClose }: Props) {
             </button>
             <button
               type="submit"
-              disabled={saving || !title.trim()}
+              disabled={saving || !title.trim() || uploading}
               className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               {saving ? '保存中...' : '保存'}
