@@ -143,7 +143,7 @@ module "ecs_frontend" {
   alb_target_group_arn  = module.alb.frontend_target_group_arn
   container_image       = "${module.ecr_frontend.repository_url}:latest"
   container_port        = 3000
-  desired_count         = 0
+  desired_count         = 1
 }
 
 module "github_oidc" {
