@@ -79,12 +79,25 @@ module "rds" {
   db_engine_version = "16.10"
 }
 
+module "waf" {
+  source = "../../modules/waf"
+
+  providers = {
+    aws = aws.us_east_1
+  }
+
+  project          = var.project
+  environment      = var.environment
+  maintenance_mode = var.maintenance_mode
+}
+
 module "cloudfront" {
   source = "../../modules/cloudfront"
 
   project      = var.project
   environment  = var.environment
   alb_dns_name = module.alb.alb_dns_name
+  web_acl_id   = module.waf.web_acl_arn
 }
 
 module "s3_images" {

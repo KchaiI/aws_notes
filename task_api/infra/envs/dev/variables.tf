@@ -15,3 +15,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "maintenance_mode" {
+  description = "true にすると WAF が全リクエストを 503 でブロックする"
+  type        = bool
+  default     = false
+}

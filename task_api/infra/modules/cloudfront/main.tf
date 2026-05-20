@@ -9,6 +9,7 @@ resource "aws_cloudfront_distribution" "this" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${local.name_prefix} distribution"
+  web_acl_id      = var.web_acl_id
 
   # 価格クラス: 最安(北米・欧州のみのエッジ)
   # アジア圏も使うなら PriceClass_200、全球なら PriceClass_All

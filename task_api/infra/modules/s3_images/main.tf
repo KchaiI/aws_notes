@@ -37,6 +37,20 @@ resource "aws_s3_bucket_public_access_block" "images" {
 }
 
 # ──────────────────────────────────────
+# CORS（ブラウザからの Presigned PUT を許可）
+# ──────────────────────────────────────
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+
+  cors_rule {
+    allowed_origins = ["*"]
+    allowed_methods = ["PUT"]
+    allowed_headers = ["*"]
+    max_age_seconds = 3000
+  }
+}
+
+# ──────────────────────────────────────
 # CloudFront OAC（S3 へのアクセス制御）
 # ──────────────────────────────────────
 resource "aws_cloudfront_origin_access_control" "images" {

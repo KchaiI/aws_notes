@@ -18,3 +18,9 @@ variable "alb_origin_id" {
   description = "CloudFront内部で使うオリジン識別子"
   default     = "alb-origin"
 }
+
+variable "web_acl_id" {
+  type        = string
+  description = "WAF Web ACL の ARN（null の場合は WAF なし）"
+  default     = null
+}
