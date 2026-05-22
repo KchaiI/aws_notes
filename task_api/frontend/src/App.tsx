@@ -93,7 +93,7 @@ export default function App() {
       const res = await fetch(`${BASE}/tasks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: task.title, description: task.description ?? '', status }),
+        body: JSON.stringify({ title: task.title, description: task.description ?? '', status, pictureKey: task.pictureKey ?? undefined }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const updated: Task = await res.json()

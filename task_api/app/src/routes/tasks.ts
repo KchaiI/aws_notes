@@ -42,7 +42,12 @@ export async function tasksRoutes(fastify: FastifyInstance) {
       data: parseResult.data,
     });
 
-    return reply.code(201).send(task);
+    return reply.code(201).send({
+      ...task,
+      signedImageUrl: task.pictureKey
+        ? await generateSignedImageUrl(task.pictureKey)
+        : null,
+    });
   });
 
   // GET /tasks/:id - 取得
@@ -79,7 +84,12 @@ export async function tasksRoutes(fastify: FastifyInstance) {
       data: parseResult.data,
     });
 
-    return task;
+    return {
+      ...task,
+      signedImageUrl: task.pictureKey
+        ? await generateSignedImageUrl(task.pictureKey)
+        : null,
+    };
   });
 
   // DELETE /tasks/:id - 削除

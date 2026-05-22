@@ -6,7 +6,7 @@ import { getSignedUrl as getCFSignedUrl } from "@aws-sdk/cloudfront-signer";
 import { randomUUID } from "crypto";
 
 const region = process.env.AWS_REGION ?? "ap-northeast-1";
-const s3 = new S3Client({ region });
+const s3 = new S3Client({ region, requestChecksumCalculation: "WHEN_REQUIRED" });
 const sqs = new SQSClient({ region });
 const secretsManager = new SecretsManagerClient({ region });
 
