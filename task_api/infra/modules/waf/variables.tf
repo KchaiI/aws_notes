@@ -11,5 +11,5 @@ variable "environment" {
 variable "maintenance_mode" {
   type        = bool
   description = "true にすると全リクエストを 503 でブロックする"
-  default     = false
+  default     = true
 }
