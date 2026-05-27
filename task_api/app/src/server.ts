@@ -1,5 +1,5 @@
 import "./lib/env.js";
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import sensible from "@fastify/sensible";
 import { tasksRoutes } from "./routes/tasks.js";
 import { healthRoutes } from "./routes/health.js";
@@ -22,6 +22,49 @@ const fastify = Fastify({
 
 // プラグイン
 await fastify.register(sensible);
+
+// ─────────────────────────────────────────────────────────────
+// エラーハンドラー
+//
+// 設計理由:
+//   - ルートは throw するだけ / reply.code(4xx).send() するだけでよく、
+//     ログ出力の責務をここに集約する（Single Responsibility）
+//   - pino が JSON 形式で出力するため、CloudWatch Insights で
+//     「level >= 50」のフィルタだけでサーバーエラーを抽出できる
+//   - 5xx: error レベル (level=50) → アラート対象
+//   - 4xx: warn レベル (level=40) → 監視はするが通知不要
+//   - reqId フィールドで「リクエストログ ↔ エラーログ」を紐付け可能
+// ─────────────────────────────────────────────────────────────
+fastify.setErrorHandler((error: FastifyError, request, reply) => {
+  const statusCode = error.statusCode ?? 500;
+
+  if (statusCode >= 500) {
+    request.log.error(
+      {
+        err: {
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+        },
+        statusCode,
+        method: request.method,
+        url: request.url,
+      },
+      "Server error",
+    );
+  } else {
+    request.log.warn(
+      { statusCode, method: request.method, url: request.url, message: error.message },
+      "Client error",
+    );
+  }
+
+  reply.code(statusCode).send({
+    statusCode,
+    error: error.name,
+    message: error.message,
+  });
+});
 
 // ルート
 await fastify.register(tasksRoutes, { prefix: "/api" });

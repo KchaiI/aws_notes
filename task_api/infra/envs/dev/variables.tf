@@ -21,3 +21,9 @@ variable "maintenance_mode" {
   type        = bool
   default     = false
 }
+
+variable "slack_webhook_url" {
+  description = "CPU アラーム通知先の Slack Incoming Webhook URL"
+  type        = string
+  sensitive   = true
+}

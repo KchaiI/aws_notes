@@ -192,6 +192,20 @@ module "ecs_worker" {
   ]
 }
 
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project     = var.project
+  environment = var.environment
+
+  cluster_name   = module.ecs.cluster_name
+  service_name   = module.ecs.service_name
+  log_group_name = module.ecs.log_group_name
+
+  slack_webhook_url   = var.slack_webhook_url
+  cpu_alarm_threshold = 1
+}
+
 module "github_oidc" {
   source = "../../modules/github_oidc"
 
